@@ -1,0 +1,8 @@
+# eclipse project files
+.settings/
+.classpath
+.project
+bin/
+
+# apache ant build files
+build/
