@@ -5,6 +5,8 @@ import java.util.Set;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
 import it.polito.dp2.NFV.NfvReader;
@@ -19,7 +21,6 @@ public class MyReachabilityTester implements ReachabilityTester
 {
 	private NfvReader monitor;
 	private String url;
-	private WebTarget target;
 
 	public MyReachabilityTester(NfvReader monitor)
 	{
@@ -32,16 +33,18 @@ public class MyReachabilityTester implements ReachabilityTester
         	System.err.println("System property \"it.polito.dp2.NFV.lab2.URL\" not found");
         	System.exit(1);
         }
-		
-		// create JAX-RS client and WebTarget
-		Client clientObject = ClientBuilder.newClient();
-		target = clientObject.target( UriBuilder.fromUri(url).build() );
 	}
 
 	@Override
 	public void loadGraph(String nffgName) throws UnknownNameException, AlreadyLoadedException, ServiceException
 	{
-		// TODO Auto-generated method stub
+		// create JAX-RS client and WebTarget
+		Client client = ClientBuilder.newClient();
+		Response res = client.target( UriBuilder.fromUri(url).build() )
+				             .request(MediaType.APPLICATION_XML)
+				             .get();
+		
+		client.close();
 	}
 
 	@Override
