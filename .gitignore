@@ -6,3 +6,6 @@ bin/
 
 # apache ant build files
 build/
+
+# jaxb generated classes
+gen-src/
