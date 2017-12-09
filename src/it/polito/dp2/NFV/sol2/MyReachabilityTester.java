@@ -2,7 +2,6 @@ package it.polito.dp2.NFV.sol2;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.ws.rs.ProcessingException;
@@ -60,7 +59,7 @@ public class MyReachabilityTester implements ReachabilityTester
 	{
 		// Check if already loaded
 		if ( isLoaded(nffgName) )
-			throw new AlreadyLoadedException();
+			throw new AlreadyLoadedException("Nffg \"" + nffgName + "\" already loaded");
 		
 		// Delete all previous loaded nodes
 		deleteAllNodes();
@@ -92,7 +91,7 @@ public class MyReachabilityTester implements ReachabilityTester
 		
 		// Check if "nffgName" is null, unknown or not loaded
 		if ( !isLoaded(nffgName) )
-			throw new NoGraphException();
+			throw new NoGraphException("Nffg \"" + nffgName + "\" has not been loaded");
 		
 		// nffg_r already correctly initialized my "isLoaded" method
 		for (NodeReader node_r: nffg_r.getNodes())
@@ -112,16 +111,13 @@ public class MyReachabilityTester implements ReachabilityTester
 						               .get(Nodes.class);
 			}
 			catch (ProcessingException pe) {
-				System.err.println("Error during JAX-RS request processing");
-				throw new ServiceException(pe);
+				throw new ServiceException("Error during JAX-RS request processing", pe);
 			}
 			catch (WebApplicationException wae) {
-				System.err.println("Server returned error: links");
-				throw new ServiceException(wae);
+				throw new ServiceException("Server returned error", wae);
 			}
 			catch (Exception e) {
-				System.err.println("Unexpected exception");
-				throw new ServiceException(e);
+				throw new ServiceException("Unexpected exception", e);
 			}
 			
 			// Create reachable hostSet
@@ -136,7 +132,11 @@ public class MyReachabilityTester implements ReachabilityTester
 			for (Node node: reachableNodes.getNode())
 			{
 				String nodeName = node.getProperties().getProperty().iterator().next().getValue();
-				hostSet.add( nffg_r.getNode(nodeName).getHost() );
+				
+				// Add reachable host if present
+				HostReader newReachableHost = nffg_r.getNode(nodeName).getHost();
+				if (newReachableHost != null)
+					hostSet.add(newReachableHost);
 			}
 			
 			ExtendedNodeReader newExNode_r = new MyExtendedNodeReader(node_r, nffgLoaded, hostSet);
@@ -181,16 +181,13 @@ public class MyReachabilityTester implements ReachabilityTester
 					             .request().delete();
 		}
 		catch (ProcessingException pe) {
-			System.err.println("Error during JAX-RS request processing");
-			throw new ServiceException(pe);
+			throw new ServiceException("Error during JAX-RS request processing", pe);
 		}
 		catch (WebApplicationException wae) {
-			System.err.println("Server returned error");
-			throw new ServiceException(wae);
+			throw new ServiceException("Server returned error", wae);
 		}
 		catch (Exception e) {
-			System.err.println("Unexpected exception");
-			throw new ServiceException(e);
+			throw new ServiceException("Unexpected exception", e);
 		}
 	}
 	
@@ -252,16 +249,13 @@ public class MyReachabilityTester implements ReachabilityTester
 					hostMap.put(nodeName, res.id);
 			}
 			catch (ProcessingException pe) {
-				System.err.println("Error during JAX-RS request processing");
-				throw new ServiceException(pe);
+				throw new ServiceException("Error during JAX-RS request processing", pe);
 			}
 			catch (WebApplicationException wae) {
-				System.err.println("Server returned error");
-				throw new ServiceException(wae);
+				throw new ServiceException("Server returned error", wae);
 			}
 			catch (Exception e) {
-				System.err.println("Unexpected exception");
-				throw new ServiceException(e);
+				throw new ServiceException("Unexpected exception", e);
 			}
 		}
 	}
@@ -323,16 +317,13 @@ public class MyReachabilityTester implements ReachabilityTester
 					                 .post(Entity.entity(newRelationship, MediaType.APPLICATION_XML), Relationship.class);
 		}
 		catch (ProcessingException pe) {
-			System.err.println("Error during JAX-RS request processing");
-			throw new ServiceException(pe);
+			throw new ServiceException("Error during JAX-RS request processing", pe);
 		}
 		catch (WebApplicationException wae) {
-			System.err.println("Server returned error: links");
-			throw new ServiceException(wae);
+			throw new ServiceException("Server returned error", wae);
 		}
 		catch (Exception e) {
-			System.err.println("Unexpected exception");
-			throw new ServiceException(e);
+			throw new ServiceException("Unexpected exception", e);
 		}
 	}
 

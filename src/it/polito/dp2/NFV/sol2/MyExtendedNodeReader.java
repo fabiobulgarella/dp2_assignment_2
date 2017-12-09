@@ -60,7 +60,7 @@ public class MyExtendedNodeReader implements ExtendedNodeReader
 	{	
 		// Check if a graph is currently loaded
 		if (nffgLoaded == null)
-			throw new NoGraphException();
+			throw new NoGraphException("No Graph is currently loaded");
 		
 		return hostSet;
 	}
