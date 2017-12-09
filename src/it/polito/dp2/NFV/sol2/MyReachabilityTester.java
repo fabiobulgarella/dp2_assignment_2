@@ -93,7 +93,7 @@ public class MyReachabilityTester implements ReachabilityTester
 		if ( !isLoaded(nffgName) )
 			throw new NoGraphException("Nffg \"" + nffgName + "\" has not been loaded");
 		
-		// nffg_r already correctly initialized my "isLoaded" method
+		// nffg_r already correctly initialized by "isLoaded" method
 		for (NodeReader node_r: nffg_r.getNodes())
 		{
 			Nodes reachableNodes;
