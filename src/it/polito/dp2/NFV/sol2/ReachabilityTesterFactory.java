@@ -17,9 +17,9 @@ public class ReachabilityTesterFactory extends it.polito.dp2.NFV.lab2.Reachabili
 		
 		// Check if System Property has been read correctly
 		if (url == null)
-        {
+		{
 			throw new ReachabilityTesterException("System property \"it.polito.dp2.NFV.lab2.URL\" not found");
-        }
+		}
 		
 		try {
 			monitor = factory.newNfvReader();
