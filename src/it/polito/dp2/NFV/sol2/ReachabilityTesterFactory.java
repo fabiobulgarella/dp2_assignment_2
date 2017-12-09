@@ -25,7 +25,7 @@ public class ReachabilityTesterFactory extends it.polito.dp2.NFV.lab2.Reachabili
 			monitor = factory.newNfvReader();
 		}
 		catch(NfvReaderException nre) {
-			throw new ReachabilityTesterException("Error while creating monitor");
+			throw new ReachabilityTesterException(nre, "Error while creating monitor");
 		}
 		
 		return new MyReachabilityTester(monitor, url);
