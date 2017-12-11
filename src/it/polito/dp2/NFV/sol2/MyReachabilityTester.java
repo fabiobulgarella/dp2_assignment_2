@@ -61,8 +61,8 @@ public class MyReachabilityTester implements ReachabilityTester
 		if ( isLoaded(nffgName) )
 			throw new AlreadyLoadedException("Nffg \"" + nffgName + "\" already loaded");
 		
-		// Delete all previous loaded nodes
-		deleteAllNodes();
+		// Delete all previous loaded nodes (BUGGATO -> remove first related relationships)
+		// deleteAllNodes();
 		
 		// Reset HashMaps
 		nodeMap.clear();
@@ -120,26 +120,39 @@ public class MyReachabilityTester implements ReachabilityTester
 				throw new ServiceException("Unexpected exception", e);
 			}
 			
-			// Create reachable hostSet
-			Set<HostReader> hostSet = new HashSet<HostReader>();
+			// Create reachable hostSet and hostNameSet (to keep track of host already added in the list)
+			Set<HostReader> reachableHostSet = new HashSet<HostReader>();
+			HashSet<String> reachableHostNameSet = new HashSet<String>();
 			
 			// Add host where node is allocated on into the set
 			HostReader host_r = node_r.getHost();
 			if (host_r != null)
-				hostSet.add(host_r);
+			{
+				reachableHostSet.add(host_r);
+				reachableHostNameSet.add(host_r.getName());
+			}
 			
 			// Search for reachable hosts
 			for (Node node: reachableNodes.getNode())
 			{
 				String nodeName = node.getProperties().getProperty().iterator().next().getValue();
 				
-				// Add reachable host if present
+				// Add reachable host if present AND if not already loaded inside reachableHostSet
 				HostReader newReachableHost = nffg_r.getNode(nodeName).getHost();
+				
 				if (newReachableHost != null)
-					hostSet.add(newReachableHost);
+				{
+					String newReachableHostName = newReachableHost.getName();
+					
+					if ( !reachableHostNameSet.contains(newReachableHostName) )
+					{
+						reachableHostSet.add(newReachableHost);
+						reachableHostNameSet.add(newReachableHostName);
+					}
+				}
 			}
 			
-			ExtendedNodeReader newExNode_r = new MyExtendedNodeReader(node_r, nffgLoaded, hostSet);
+			ExtendedNodeReader newExNode_r = new MyExtendedNodeReader(node_r, nffgLoaded, reachableHostSet);
 			set.add(newExNode_r);
 		}
 		
