@@ -12,8 +12,6 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-
 import it.polito.dp2.NFV.HostReader;
 import it.polito.dp2.NFV.LinkReader;
 import it.polito.dp2.NFV.NffgReader;
@@ -23,6 +21,7 @@ import it.polito.dp2.NFV.lab2.AlreadyLoadedException;
 import it.polito.dp2.NFV.lab2.ExtendedNodeReader;
 import it.polito.dp2.NFV.lab2.NoGraphException;
 import it.polito.dp2.NFV.lab2.ReachabilityTester;
+import it.polito.dp2.NFV.lab2.ReachabilityTesterException;
 import it.polito.dp2.NFV.lab2.ServiceException;
 import it.polito.dp2.NFV.lab2.UnknownNameException;
 
@@ -37,21 +36,28 @@ public class MyReachabilityTester implements ReachabilityTester
 	
 	private HashMap<String, String> nodeMap;
 	private HashMap<String, String> hostMap;
+	private HashSet<String> relationshipSet;
 
-	public MyReachabilityTester(NfvReader monitor, String url)
+	public MyReachabilityTester(NfvReader monitor, String url) throws ReachabilityTesterException
 	{
 		this.monitor = monitor;
 		
 		// Create JAX-RS Client and WebTarget
 		Client client = ClientBuilder.newClient();
-		target = client.target( UriBuilder.fromUri(url).build() );
+		try {
+			target = client.target(url);
+		}
+		catch (IllegalArgumentException iae) {
+			throw new ReachabilityTesterException(iae, "Url is not a valid URI");
+		}
 		
 		// Instantiate ObjectFactory
 		objFactory = new ObjectFactory();
 		
-		// Instantiate HashMap to track loaded nodes and hosts
+		// Instantiate HashMap and HashSet to track loaded nodes and relationships
 		nodeMap = new HashMap<String, String>();
 		hostMap = new HashMap<String, String>();
+		relationshipSet = new HashSet<String>();
 	}
 
 	@Override
@@ -61,12 +67,13 @@ public class MyReachabilityTester implements ReachabilityTester
 		if ( isLoaded(nffgName) )
 			throw new AlreadyLoadedException("Nffg \"" + nffgName + "\" already loaded");
 		
-		// Delete all previous loaded nodes (BUGGATO -> remove first related relationships)
-		// deleteAllNodes();
+		// Delete all previous loaded nodes
+		deleteAllNodes();
 		
-		// Reset HashMaps
+		// Reset HashMaps and HashSet
 		nodeMap.clear();
 		hostMap.clear();
+		relationshipSet.clear();
 		
 		// Get nffg-nodes and load them into graph (Type "Node")
 		loadNodes("Node");
@@ -177,6 +184,10 @@ public class MyReachabilityTester implements ReachabilityTester
 	
 	private void deleteAllNodes() throws ServiceException
 	{
+		// Delete first all relationships
+		for (String value: relationshipSet)
+			deleteRelationship(value);
+		
 		// Delete all nffg-nodes
 		for (String value: nodeMap.values())
 			deleteNode(value);
@@ -192,6 +203,32 @@ public class MyReachabilityTester implements ReachabilityTester
 		try {
 			Response res = target.path("data/node/" + nodeID)
 					             .request().delete();
+			
+			// Check "res" response (it doesn't throw exception automatically)
+			if (res.getStatus() != 204)
+				throw new WebApplicationException();
+		}
+		catch (ProcessingException pe) {
+			throw new ServiceException("Error during JAX-RS request processing", pe);
+		}
+		catch (WebApplicationException wae) {
+			throw new ServiceException("Server returned error", wae);
+		}
+		catch (Exception e) {
+			throw new ServiceException("Unexpected exception", e);
+		}
+	}
+	
+	private void deleteRelationship(String relationshipID) throws ServiceException
+	{
+		// Call Neo4JSimpleXML API
+		try {
+			Response res = target.path("data/relationship/" + relationshipID)
+                                 .request().delete();
+		
+			// Check "res" response (it doesn't throw exception automatically)
+			if (res.getStatus() != 204)
+				throw new WebApplicationException();
 		}
 		catch (ProcessingException pe) {
 			throw new ServiceException("Error during JAX-RS request processing", pe);
@@ -256,10 +293,14 @@ public class MyReachabilityTester implements ReachabilityTester
 						              .request(MediaType.APPLICATION_XML)
 						              .post(Entity.entity(newLabels, MediaType.APPLICATION_XML));
 				
+				// Check "res2" response (it doesn't throw exception automatically)
+				if (res2.getStatus() != 204)
+					throw new WebApplicationException();
+				
 				if (type == "Node")
-					nodeMap.put(nodeName, res.id);
+					nodeMap.put(nodeName, res.getId());
 				else
-					hostMap.put(nodeName, res.id);
+					hostMap.put(nodeName, res.getId());
 			}
 			catch (ProcessingException pe) {
 				throw new ServiceException("Error during JAX-RS request processing", pe);
@@ -328,6 +369,8 @@ public class MyReachabilityTester implements ReachabilityTester
 			Relationship res = target.path("data/node/" + srcNodeID + "/relationships")
 					                 .request(MediaType.APPLICATION_XML)
 					                 .post(Entity.entity(newRelationship, MediaType.APPLICATION_XML), Relationship.class);
+			
+			relationshipSet.add(res.getId());
 		}
 		catch (ProcessingException pe) {
 			throw new ServiceException("Error during JAX-RS request processing", pe);
