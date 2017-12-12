@@ -179,7 +179,7 @@ public class MyReachabilityTester implements ReachabilityTester
 			throw new UnknownNameException("Unknown nffgName, retreiving nffg failed");
 		
 		// Check if already loaded
-		return (nffgName == nffgLoaded) ? true : false;
+		return nffgName.equals(nffgLoaded);
 	}
 	
 	private void deleteAllNodes() throws ServiceException
@@ -249,7 +249,7 @@ public class MyReachabilityTester implements ReachabilityTester
 			HostReader host_r;
 			
 			// Type is Node
-			if (type == "Node")
+			if (type.equals("Node"))
 			{
 				// Get nodeName (nffg-node)
 				nodeName = node_r.getName();
@@ -297,7 +297,7 @@ public class MyReachabilityTester implements ReachabilityTester
 				if (res2.getStatus() != 204)
 					throw new WebApplicationException();
 				
-				if (type == "Node")
+				if (type.equals("Node"))
 					nodeMap.put(nodeName, res.getId());
 				else
 					hostMap.put(nodeName, res.getId());
@@ -317,7 +317,7 @@ public class MyReachabilityTester implements ReachabilityTester
 	private void loadRelationships(String type) throws ServiceException
 	{
 		// Type is ForwardsTo
-		if (type == "ForwardsTo")
+		if (type.equals("ForwardsTo"))
 		{
 			for (NodeReader node_r: nffg_r.getNodes())
 				for (LinkReader link_r: node_r.getLinks())
@@ -341,7 +341,7 @@ public class MyReachabilityTester implements ReachabilityTester
 		String dstNodeID;
 		
 		// Type is ForwardsTo
-		if (type == "ForwardsTo")
+		if (type.equals("ForwardsTo"))
 		{
 			// Get dstNodeID relatively to a node
 			dstNodeID = nodeMap.get( link_r.getDestinationNode().getName() );
