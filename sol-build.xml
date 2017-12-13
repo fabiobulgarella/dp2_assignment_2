@@ -13,7 +13,8 @@
 			<arg value="${gen.dir}" />
 			<arg value="-p" />
 			<arg value="it.polito.dp2.NFV.sol2" />
-			<arg value="${custom.dir}/Neo4JSimpleXML.xsd" />
+			<arg value="http://localhost:8080/Neo4JSimpleXML/Neo4JSimpleXML.xsd" />
+			<!-- <arg value="${custom.dir}/Neo4JSimpleXML.xsd" /> -->
 		</exec>
 	</target>
 
