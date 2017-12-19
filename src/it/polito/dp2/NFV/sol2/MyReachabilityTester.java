@@ -67,6 +67,9 @@ public class MyReachabilityTester implements ReachabilityTester
 		if ( isLoaded(nffgName) )
 			throw new AlreadyLoadedException("Nffg \"" + nffgName + "\" already loaded");
 		
+		// Reset nffgLoaded variable
+		nffgLoaded = null;
+		
 		// Delete all previous loaded nodes
 		deleteAllNodes();
 		
@@ -88,7 +91,7 @@ public class MyReachabilityTester implements ReachabilityTester
 		loadRelationships("AllocatedOn");
 		
 		// Set this nffg as successfully loaded
-		this.nffgLoaded = nffgName;
+		nffgLoaded = nffgName;
 	}
 
 	@Override
