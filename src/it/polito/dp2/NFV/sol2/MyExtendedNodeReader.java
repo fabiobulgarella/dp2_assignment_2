@@ -66,9 +66,9 @@ public class MyExtendedNodeReader implements ExtendedNodeReader
 	@Override
 	public Set<HostReader> getReachableHosts() throws NoGraphException, ServiceException
 	{	
-		// Check if a graph is currently loaded
-		if (nffgLoaded == null)
-			throw new NoGraphException("No Graph is currently loaded");
+		// Check if a graph corresponding to node's nffg is currently loaded
+		if ( !node_r.getNffg().getName().equals(nffgLoaded) )
+			throw new NoGraphException("No Graph corresponding to this node's nffg is currently loaded");
 		
 		// Call Neo4JSimpleXML API
 		Nodes reachableNodes;
