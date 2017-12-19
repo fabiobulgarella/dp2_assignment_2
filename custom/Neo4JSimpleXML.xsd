@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://pad.polito.it/dp2/Neo4JSimpleXML"
+	xmlns="http://pad.polito.it/dp2/Neo4JSimpleXML" elementFormDefault="qualified">
+	
+	<xsd:annotation>
+		<xsd:documentation>
+			XML Schema for Neo4JSimpleXML service
+		</xsd:documentation>
+	</xsd:annotation>
+
+	<xsd:element name="node">
+		<xsd:annotation>
+			<xsd:documentation>
+				A node in the Neo4J graph, with properties, labels, and unique id
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element ref="properties" minOccurs="0"/>
+				<xsd:element ref="labels" minOccurs="0"/>
+			</xsd:sequence>
+			<xsd:attribute name="id" type="xsd:string" use="optional"></xsd:attribute>
+		</xsd:complexType>
+	</xsd:element>
+	
+	<xsd:element name="nodes">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element ref="node" minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+	
+	<xsd:element name="property" type="Property"/>
+	
+	<xsd:complexType name="Property">
+		<xsd:attribute name="name" type="xsd:string" use="required"></xsd:attribute>
+		<xsd:attribute name="value" type="xsd:string" use="required"></xsd:attribute>
+	</xsd:complexType>
+
+	<xsd:element name="properties">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element ref="property" minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+	
+	<xsd:element name="labels">
+	<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element name="label" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="relationship">
+		<xsd:annotation>
+			<xsd:documentation>
+				A relationship in the Neo4J graph, with type, source and destination nodes, and unique id
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:attribute name="dstNode" type="xsd:string" use="required"></xsd:attribute>
+			<xsd:attribute name="type" type="xsd:string" use="required"></xsd:attribute>
+			<xsd:attribute name="srcNode" type="xsd:string" use="optional"></xsd:attribute>
+			<xsd:attribute name="id" type="xsd:string" use="optional"></xsd:attribute>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="relationships">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element ref="relationship" minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+</xsd:schema>

@@ -5,7 +5,7 @@
 			Script for NFV Assignment 2 solution
 	</description>
 
-	<property name="Neo4JSimpleXML.xsd.url" value="http://localhost:${PORT}/Neo4JSimpleXML/Neo4JSimpleXML.xsd"/>
+	<property name="custom.dir" location="${lab2.location}/custom" />
 	
 	<target name="generate-artifacts">
 		<exec executable="xjc" failonerror="true" >
@@ -13,7 +13,7 @@
 			<arg value="${gen.dir}" />
 			<arg value="-p" />
 			<arg value="it.polito.dp2.NFV.sol2" />
-			<arg value="${Neo4JSimpleXML.xsd.url}" />
+			<arg value="${custom.dir}/Neo4JSimpleXML.xsd" />
 		</exec>
 	</target>
 
