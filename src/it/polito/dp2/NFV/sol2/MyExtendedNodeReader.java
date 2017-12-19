@@ -1,6 +1,12 @@
 package it.polito.dp2.NFV.sol2;
 
+import java.util.HashSet;
 import java.util.Set;
+
+import javax.ws.rs.ProcessingException;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
 
 import it.polito.dp2.NFV.HostReader;
 import it.polito.dp2.NFV.LinkReader;
@@ -13,18 +19,20 @@ import it.polito.dp2.NFV.lab2.ServiceException;
 
 public class MyExtendedNodeReader implements ExtendedNodeReader
 {
-	private NodeReader node_r;
+	private WebTarget target;
 	private String nffgLoaded;
-	private Set<HostReader> hostSet;
+	private NodeReader node_r;
+	private String nodeID;
 	
 	// Class constructor
-	public MyExtendedNodeReader(NodeReader node_r, String nffgLoaded, Set<HostReader> hostSet)
+	public MyExtendedNodeReader(WebTarget target, String nffgLoaded, NodeReader node_r, String nodeID)
 	{
-		this.node_r = node_r;
+		this.target = target;
 		this.nffgLoaded = nffgLoaded;
-		this.hostSet = hostSet;
+		this.node_r = node_r;
+		this.nodeID = nodeID;
 	}
-	
+
 	@Override
 	public String getName()
 	{
@@ -62,7 +70,60 @@ public class MyExtendedNodeReader implements ExtendedNodeReader
 		if (nffgLoaded == null)
 			throw new NoGraphException("No Graph is currently loaded");
 		
-		return hostSet;
+		// Call Neo4JSimpleXML API
+		Nodes reachableNodes;
+		
+		try {
+			reachableNodes = target.path("data/node/" + nodeID + "/reachableNodes")
+					               .queryParam("relationshipTypes", "ForwardsTo")
+					               .queryParam("nodeLabel", "Node")
+					               .request()
+					               .accept(MediaType.APPLICATION_XML)
+					               .get(Nodes.class);
+		}
+		catch (ProcessingException pe) {
+			throw new ServiceException("Error during JAX-RS request processing", pe);
+		}
+		catch (WebApplicationException wae) {
+			throw new ServiceException("Server returned error", wae);
+		}
+		catch (Exception e) {
+			throw new ServiceException("Unexpected exception", e);
+		}
+		
+		// Create reachable hostSet and hostNameSet (to keep track of host already added in the list)
+		Set<HostReader> reachableHostSet = new HashSet<HostReader>();
+		HashSet<String> reachableHostNameSet = new HashSet<String>();
+		
+		// Add host where node is allocated on into the set
+		HostReader host_r = node_r.getHost();
+		if (host_r != null)
+		{
+			reachableHostSet.add(host_r);
+			reachableHostNameSet.add(host_r.getName());
+		}
+		
+		// Search for reachable hosts
+		for (Node node: reachableNodes.getNode())
+		{
+			String nodeName = node.getProperties().getProperty().iterator().next().getValue();
+			
+			// Add reachable host if present AND if not already loaded inside reachableHostSet
+			HostReader newReachableHost = node_r.getNffg().getNode(nodeName).getHost();
+			
+			if (newReachableHost != null)
+			{
+				String newReachableHostName = newReachableHost.getName();
+				
+				if ( !reachableHostNameSet.contains(newReachableHostName) )
+				{
+					reachableHostSet.add(newReachableHost);
+					reachableHostNameSet.add(newReachableHostName);
+				}
+			}
+		}
+		
+		return reachableHostSet;
 	}
 
 }

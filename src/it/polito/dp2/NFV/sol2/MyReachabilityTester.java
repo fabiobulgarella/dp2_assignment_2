@@ -105,64 +105,12 @@ public class MyReachabilityTester implements ReachabilityTester
 		
 		// nffg_r already correctly initialized by "isLoaded" method
 		for (NodeReader node_r: nffg_r.getNodes())
-		{
-			Nodes reachableNodes;
-			
+		{	
 			// Get node id
 			String nodeID = nodeMap.get(node_r.getName());
 			
-			// Call Neo4JSimpleXML API
-			try {
-				reachableNodes = target.path("data/node/" + nodeID + "/reachableNodes")
-						               .queryParam("relationshipTypes", "ForwardsTo")
-						               .queryParam("nodeLabel", "Node")
-						               .request()
-						               .accept(MediaType.APPLICATION_XML)
-						               .get(Nodes.class);
-			}
-			catch (ProcessingException pe) {
-				throw new ServiceException("Error during JAX-RS request processing", pe);
-			}
-			catch (WebApplicationException wae) {
-				throw new ServiceException("Server returned error", wae);
-			}
-			catch (Exception e) {
-				throw new ServiceException("Unexpected exception", e);
-			}
-			
-			// Create reachable hostSet and hostNameSet (to keep track of host already added in the list)
-			Set<HostReader> reachableHostSet = new HashSet<HostReader>();
-			HashSet<String> reachableHostNameSet = new HashSet<String>();
-			
-			// Add host where node is allocated on into the set
-			HostReader host_r = node_r.getHost();
-			if (host_r != null)
-			{
-				reachableHostSet.add(host_r);
-				reachableHostNameSet.add(host_r.getName());
-			}
-			
-			// Search for reachable hosts
-			for (Node node: reachableNodes.getNode())
-			{
-				String nodeName = node.getProperties().getProperty().iterator().next().getValue();
-				
-				// Add reachable host if present AND if not already loaded inside reachableHostSet
-				HostReader newReachableHost = nffg_r.getNode(nodeName).getHost();
-				
-				if (newReachableHost != null)
-				{
-					String newReachableHostName = newReachableHost.getName();
-					
-					if ( !reachableHostNameSet.contains(newReachableHostName) )
-					{
-						reachableHostSet.add(newReachableHost);
-						reachableHostNameSet.add(newReachableHostName);
-					}
-				}
-			}
-			
-			ExtendedNodeReader newExNode_r = new MyExtendedNodeReader(node_r, nffgLoaded, reachableHostSet);
+			// Create a new ExtendedNodeReader for the relative node
+			ExtendedNodeReader newExNode_r = new MyExtendedNodeReader(target, nffgLoaded, node_r, nodeID);
 			set.add(newExNode_r);
 		}
 		
