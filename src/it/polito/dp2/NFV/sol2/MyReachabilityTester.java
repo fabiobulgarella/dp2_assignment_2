@@ -31,12 +31,11 @@ public class MyReachabilityTester implements ReachabilityTester
 	private WebTarget target;
 	private ObjectFactory objFactory;
 	
-	private StringBuilder nffgLoaded;
 	private NffgReader nffg_r;
 	
+	private HashSet<String> nffgLoadedSet;
 	private HashMap<String, String> nodeMap;
 	private HashMap<String, String> hostMap;
-	private HashSet<String> relationshipSet;
 
 	public MyReachabilityTester(NfvReader monitor, String url) throws ReachabilityTesterException
 	{
@@ -57,10 +56,9 @@ public class MyReachabilityTester implements ReachabilityTester
 		// Instantiate HashMap and HashSet to track loaded nodes and relationships
 		nodeMap = new HashMap<String, String>();
 		hostMap = new HashMap<String, String>();
-		relationshipSet = new HashSet<String>();
 		
-		// Instantiate nffgLoaded mutable string (in order to share a mutable string between objects)
-		nffgLoaded = new StringBuilder();
+		// Instantiate HashSet to track nffgs that have been loaded
+		nffgLoadedSet = new HashSet<String>();
 	}
 
 	@Override
@@ -69,17 +67,6 @@ public class MyReachabilityTester implements ReachabilityTester
 		// Check if already loaded
 		if ( isLoaded(nffgName) )
 			throw new AlreadyLoadedException("Nffg \"" + nffgName + "\" already loaded");
-		
-		// Reset nffgLoaded variable
-		setNffgLoaded(null);
-		
-		// Delete all previous loaded nodes
-		deleteAllNodes();
-		
-		// Reset HashMaps and HashSet
-		nodeMap.clear();
-		hostMap.clear();
-		relationshipSet.clear();
 		
 		// Get nffg-nodes and load them into graph (Type "Node")
 		loadNodes("Node");
@@ -94,7 +81,7 @@ public class MyReachabilityTester implements ReachabilityTester
 		loadRelationships("AllocatedOn");
 		
 		// Set this nffg as successfully loaded
-		setNffgLoaded(nffgName);
+		nffgLoadedSet.add(nffgName);
 	}
 
 	@Override
@@ -113,7 +100,7 @@ public class MyReachabilityTester implements ReachabilityTester
 			String nodeID = nodeMap.get(node_r.getName());
 			
 			// Create a new ExtendedNodeReader for the relative node
-			ExtendedNodeReader newExNode_r = new MyExtendedNodeReader(target, nffgLoaded, node_r, nodeID);
+			ExtendedNodeReader newExNode_r = new MyExtendedNodeReader(target, nffgLoadedSet, node_r, nodeID);
 			set.add(newExNode_r);
 		}
 		
@@ -133,66 +120,7 @@ public class MyReachabilityTester implements ReachabilityTester
 			throw new UnknownNameException("Unknown nffgName, retreiving nffg failed");
 		
 		// Check if already loaded
-		return nffgName.equals(nffgLoaded.toString());
-	}
-	
-	private void deleteAllNodes() throws ServiceException
-	{
-		// Delete first all relationships
-		for (String value: relationshipSet)
-			deleteRelationship(value);
-		
-		// Delete all nffg-nodes
-		for (String value: nodeMap.values())
-			deleteNode(value);
-		
-		// Delete all hosts
-		for (String value: hostMap.values())
-			deleteNode(value);
-	}
-	
-	private void deleteNode(String nodeID) throws ServiceException
-	{
-		// Call Neo4JSimpleXML API
-		try {
-			Response res = target.path("data/node/" + nodeID)
-					             .request().delete();
-			
-			// Check "res" response (it doesn't throw exception automatically)
-			if (res.getStatus() != 204)
-				throw new WebApplicationException();
-		}
-		catch (ProcessingException pe) {
-			throw new ServiceException("Error during JAX-RS request processing", pe);
-		}
-		catch (WebApplicationException wae) {
-			throw new ServiceException("Server returned error", wae);
-		}
-		catch (Exception e) {
-			throw new ServiceException("Unexpected exception", e);
-		}
-	}
-	
-	private void deleteRelationship(String relationshipID) throws ServiceException
-	{
-		// Call Neo4JSimpleXML API
-		try {
-			Response res = target.path("data/relationship/" + relationshipID)
-                                 .request().delete();
-		
-			// Check "res" response (it doesn't throw exception automatically)
-			if (res.getStatus() != 204)
-				throw new WebApplicationException();
-		}
-		catch (ProcessingException pe) {
-			throw new ServiceException("Error during JAX-RS request processing", pe);
-		}
-		catch (WebApplicationException wae) {
-			throw new ServiceException("Server returned error", wae);
-		}
-		catch (Exception e) {
-			throw new ServiceException("Unexpected exception", e);
-		}
+		return nffgLoadedSet.contains(nffgName);
 	}
 	
 	private void loadNodes(String type) throws ServiceException
@@ -323,8 +251,6 @@ public class MyReachabilityTester implements ReachabilityTester
 			Relationship res = target.path("data/node/" + srcNodeID + "/relationships")
 					                 .request(MediaType.APPLICATION_XML)
 					                 .post(Entity.entity(newRelationship, MediaType.APPLICATION_XML), Relationship.class);
-			
-			relationshipSet.add(res.getId());
 		}
 		catch (ProcessingException pe) {
 			throw new ServiceException("Error during JAX-RS request processing", pe);
@@ -335,16 +261,6 @@ public class MyReachabilityTester implements ReachabilityTester
 		catch (Exception e) {
 			throw new ServiceException("Unexpected exception", e);
 		}
-	}
-	
-	private void setNffgLoaded(String str)
-	{
-		// Delete included string
-		nffgLoaded.delete(0, nffgLoaded.length());
-		
-		// Append new string, if it's passed
-		if (str != null)
-			nffgLoaded.append(str);
 	}
 
 }

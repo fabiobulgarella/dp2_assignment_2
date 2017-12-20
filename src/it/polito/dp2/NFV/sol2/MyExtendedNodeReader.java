@@ -20,17 +20,19 @@ import it.polito.dp2.NFV.lab2.ServiceException;
 public class MyExtendedNodeReader implements ExtendedNodeReader
 {
 	private WebTarget target;
-	private StringBuilder nffgLoaded;
+	private HashSet<String> nffgLoadedSet;
 	private NodeReader node_r;
 	private String nodeID;
+	private String nodeNffgName;
 	
 	// Class constructor
-	public MyExtendedNodeReader(WebTarget target, StringBuilder nffgLoaded, NodeReader node_r, String nodeID)
+	public MyExtendedNodeReader(WebTarget target, HashSet<String> nffgLoadedSet, NodeReader node_r, String nodeID)
 	{
 		this.target = target;
-		this.nffgLoaded = nffgLoaded;
+		this.nffgLoadedSet = nffgLoadedSet;
 		this.node_r = node_r;
 		this.nodeID = nodeID;
+		this.nodeNffgName = node_r.getNffg().getName();
 	}
 
 	@Override
@@ -67,7 +69,7 @@ public class MyExtendedNodeReader implements ExtendedNodeReader
 	public Set<HostReader> getReachableHosts() throws NoGraphException, ServiceException
 	{	
 		// Check if a graph corresponding to node's nffg is currently loaded
-		if ( !node_r.getNffg().getName().equals(nffgLoaded.toString()) )
+		if ( !nffgLoadedSet.contains(nodeNffgName) )
 			throw new NoGraphException("No Graph corresponding to this node's nffg is currently loaded");
 		
 		// Call Neo4JSimpleXML API
