@@ -31,7 +31,7 @@ public class MyReachabilityTester implements ReachabilityTester
 	private WebTarget target;
 	private ObjectFactory objFactory;
 	
-	private String nffgLoaded;
+	private StringBuilder nffgLoaded;
 	private NffgReader nffg_r;
 	
 	private HashMap<String, String> nodeMap;
@@ -58,6 +58,9 @@ public class MyReachabilityTester implements ReachabilityTester
 		nodeMap = new HashMap<String, String>();
 		hostMap = new HashMap<String, String>();
 		relationshipSet = new HashSet<String>();
+		
+		// Instantiate nffgLoaded mutable string (in order to share a mutable string between objects)
+		nffgLoaded = new StringBuilder();
 	}
 
 	@Override
@@ -68,7 +71,7 @@ public class MyReachabilityTester implements ReachabilityTester
 			throw new AlreadyLoadedException("Nffg \"" + nffgName + "\" already loaded");
 		
 		// Reset nffgLoaded variable
-		nffgLoaded = null;
+		setNffgLoaded(null);
 		
 		// Delete all previous loaded nodes
 		deleteAllNodes();
@@ -91,7 +94,7 @@ public class MyReachabilityTester implements ReachabilityTester
 		loadRelationships("AllocatedOn");
 		
 		// Set this nffg as successfully loaded
-		nffgLoaded = nffgName;
+		setNffgLoaded(nffgName);
 	}
 
 	@Override
@@ -130,7 +133,7 @@ public class MyReachabilityTester implements ReachabilityTester
 			throw new UnknownNameException("Unknown nffgName, retreiving nffg failed");
 		
 		// Check if already loaded
-		return nffgName.equals(nffgLoaded);
+		return nffgName.equals(nffgLoaded.toString());
 	}
 	
 	private void deleteAllNodes() throws ServiceException
@@ -332,6 +335,16 @@ public class MyReachabilityTester implements ReachabilityTester
 		catch (Exception e) {
 			throw new ServiceException("Unexpected exception", e);
 		}
+	}
+	
+	private void setNffgLoaded(String str)
+	{
+		// Delete included string
+		nffgLoaded.delete(0, nffgLoaded.length());
+		
+		// Append new string, if it's passed
+		if (str != null)
+			nffgLoaded.append(str);
 	}
 
 }
